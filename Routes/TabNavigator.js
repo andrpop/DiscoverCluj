@@ -28,9 +28,10 @@ function MyTabs() {
         options={{
           headerShown: false,
           tabBarLabel: "Atractii",
-          tabBarColor: "blue",
-          tabBarIcon: (color) => (
+          tabBarColor: "grey",
+          tabBarIcon:  ({color, focused}) => (
             <Icon
+              focused={focused}
               color={color}
               name="photo-camera" size={25} />
           ),
@@ -43,8 +44,9 @@ function MyTabs() {
           headerShown: false,
           tabBarLabel: "Restaurante",
           tabBarColor: "grey",
-          tabBarIcon: (color) => (
+          tabBarIcon: ({color, focused}) => (
             <Icon
+              focused={focused}
               color={color}
               name="restaurant" size={25} />
           ),
@@ -57,6 +59,7 @@ function MyTabs() {
         options={{
           headerShown: false,
           tabBarLabel: "Cazare",
+          tabBarColor: "grey",
           tabBarIcon: ({ color, focused }) => (
             <Icon
               focused={focused}
@@ -72,6 +75,7 @@ function MyTabs() {
         options={{
           headerShown: false,
           tabBarLabel: "Agrement",
+          tabBarColor: "grey",
           tabBarIcon: ({ color, focused }) => (
             <Icon
               focused={focused}

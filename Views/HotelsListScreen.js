@@ -5,7 +5,7 @@ import {
   View,
   StyleSheet,
   Dimensions,
-  Image
+  Image, StatusBar,
 } from "react-native";
 const win = Dimensions.get('window');
 
@@ -16,9 +16,14 @@ export default class HotelsListScreen extends Component {
   render() {
     const { navigate } = this.props.navigation;
     return (
+      <View>
+        <StatusBar
+          hidden={true}
+        />
       <Text>
         HOTELS LIST SCREEN
       </Text>
+      </View>
     );
   }
 }

@@ -1,7 +1,6 @@
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-import { ViewPropTypes } from 'deprecated-react-native-prop-types';
-
+import Firebase from 'firebase';
+import '@firebase/auth';
+import firestore from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAjJ0iQzoCH30K8mNBF8APQSGJqRV98zuw",
@@ -11,9 +10,11 @@ const firebaseConfig = {
   storageBucket: "discovercluj.appspot.com",
   messagingSenderId: "520467623753",
   appId: "1:520467623753:web:363d1b811055eeb9fd7498",
-  measurementId: "G-27KJYV4C0H"
+  measurementId: "G-27KJYV4C0H",
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-export default app
+const app = Firebase.initializeApp(firebaseConfig);
+
+// Firebase.firestore();
+
+export const db = app.database();
