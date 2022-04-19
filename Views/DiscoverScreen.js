@@ -1,31 +1,61 @@
 import React, { Component } from "react";
 import {
-  ImageBackground,
-  Text,
-  View,
-  StyleSheet,
-  Dimensions,
-  Image, StatusBar, TouchableOpacity, TextInput, TouchableHighlight, Platform, ScrollView, Alert,
+  Text, View, StyleSheet, Dimensions, Image, StatusBar, TouchableOpacity, Platform, ScrollView, PermissionsAndroid
 } from "react-native";
-import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
+import MapView, { Circle, Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { db } from "../Firebase/Firebase";
-import CustomSidebarMenu from "./CustomSidebarMenu";
-import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import Ionicons from "react-native-vector-icons/Ionicons";
-import Button from "react-native-button";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import Fontisto from "react-native-vector-icons/Fontisto";
+import Svg, { Ellipse,Path } from "react-native-svg";
 
 const win = Dimensions.get("window");
 let returnArr = [];
 let test = [];
-let dbPath='';
+let dbPath = "";
+const LATITUDE_DELTA = 0.15;
+const LONGITUDE_DELTA = 0.15;
+navigator.geolocation = require("@react-native-community/geolocation");
+const mapRef = React.createRef();
 
 
 export default class DiscoverScreen extends Component {
 
+  async  requestLocationPermission() {
+
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION ,
+        {
+          title: "DiscoverCluj device location Permission",
+          message:
+            "DiscoverCluj needs access to your device location ",
+          buttonNegative: "Cancel",
+          buttonPositive: "OK"
+        }
+      );
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        this.getCoords();
+      } else {
+        console.log("Device location permission denied");
+      }
+    } catch (err) {
+      console.warn(err);
+    }
+  }
+
+
+   componentDidMount() {
+    this.requestLocationPermission()
+
+     setTimeout(() => {
+       this.changeRegion();     }, 2500);
+
+  }
+
   constructor(props) {
     super(props);
+
 
     this.state = {
       initialPosition: {
@@ -35,7 +65,7 @@ export default class DiscoverScreen extends Component {
         latitudeDelta: 0.50,
         longitudeDelta: 0.30,
       },
-      pinsList:[],
+      pinsList: [],
       categories: [
         {
           name: "Atractii",
@@ -51,31 +81,64 @@ export default class DiscoverScreen extends Component {
         },
         {
           name: "Agrement",
-          icon: <MaterialIcons name="sports-handball" style={styles.chipsIcon} size={18} />
+          icon: <MaterialIcons name="sports-handball" style={styles.chipsIcon} size={18} />,
         },
       ],
       isLoading: true,
-      coord: {
-        latitude: 46.7891292,
-        longitude: 23.5917804,
+      userPosition: {
+        latitude: 46.7689,
+        longitude: 23.5912,
+        latitudeDelta: 0.15,
+        longitudeDelta: 0.15,
       },
     };
 
   }
 
-  getPins(path){
-    this.setState({pinsList:test});
-    dbPath=path+"/";
+
+  getCoords() {
+    navigator.geolocation.getCurrentPosition((position) => {
+        let lat = parseFloat(position.coords.latitude);
+        let long = parseFloat(position.coords.longitude);
+        let initialRegion = {
+          latitude: lat,
+          longitude: long,
+          latitudeDelta: LATITUDE_DELTA,
+          longitudeDelta: LONGITUDE_DELTA,
+        };
+        this.setState({ userPosition: initialRegion });
+      },
+    );
+  }
+
+  changeRegion(){
+    const latitude = this.state.userPosition.latitude;
+    const longitude = this.state.userPosition.longitude
+
+    mapRef.current.animateToRegion({
+      latitude,
+      longitude,
+      latitudeDelta: 0.01,
+      longitudeDelta: 0.01
+    })
+  }
+
+
+  getPins(path) {
+    this.setState({ pinsList: test });
+    dbPath = path + "/";
     let ref = db.ref(dbPath);
-    ref.on("value",(data)=>{
-      data.forEach(function(childSnapshot){
+    ref.on("value", (data) => {
+      data.forEach(function(childSnapshot) {
         let item = childSnapshot.val();
         item.key = childSnapshot.key;
         returnArr.push(item);
       });
-      this.setState({pinsList:returnArr})
-    })
+      this.setState({ pinsList: returnArr });
+    });
   }
+
+
 
 
   render() {
@@ -84,6 +147,9 @@ export default class DiscoverScreen extends Component {
       <View style={styles.container}>
         <StatusBar hidden={true} />
         <MapView
+          // showsUserLocation={true}
+          userLocationUpdateInterval={2000}
+          ref={mapRef}
           provider={PROVIDER_GOOGLE}
           style={styles.map}
           region={{
@@ -104,42 +170,63 @@ export default class DiscoverScreen extends Component {
             </Marker>
           ))}
 
+          <Marker
+            coordinate={{
+              latitude: this.state.userPosition.latitude,
+              longitude: this.state.userPosition.longitude,
+            }}
+            title={"This is your current location"}
+          >
+            <Image source={require('../Images/userLocation.png')} style={{height: 30, width:30 }} />
+
+          </Marker>
+
         </MapView>
         <View style={styles.headerBox}>
-          <Button
-            onPress={() => {
-              this.props.navigation.openDrawer();
-            }}
-            containerStyle={{
-              marginLeft: 5,
-              height: 50,
-              width: 150,
-              overflow: "hidden",
-              backgroundColor: "#FFA500",
-              borderTopRightRadius: 20,
-              borderBottomRightRadius: 20,
-              borderTopLeftRadius:5,
-              borderBottomLeftRadius:5,
-              alignItems:"flex-start",
-              fontWeight:"bold"
-            }}
-            style={{ fontSize: 15, color: "black", marginLeft: 10 }}
+          <View
 
+            style={{
+              flex: 1,
+              flexDirection: "row",
+              paddingTop: 10,
+              marginBottom: 10,
+              paddingHorizontal: 5,
+              height: 70,
+              width: "100%",
+              backgroundColor: "#FFA500",
+              alignItems: "flex-start",
+              fontWeight: "bold",
+              shadowColor: "#ccc",
+              shadowOffset: { width: 0, height: 5 },
+              shadowOpacity: 0.5,
+              elevation: 4,
+            }}
           >
             <TouchableOpacity
               onPress={() => {
                 this.props.navigation.openDrawer();
               }}>
               <Image
-                source={require("../Images/menu-icon1.png")}
-                style={styles.floatingButtonStyle}
+                source={require("../Images/menu.png")}
+                style={styles.menuButtonStyle}
+              />
+            </TouchableOpacity>
+            <View
+              style={styles.chipHeaderImage}>
+              <Image source={require("../Images/Header1.png")}
+                     style={styles.headerImage} />
+            </View>
+            <TouchableOpacity
+              onPress={() => {
+                this.props.navigation.jumpTo("Favourites");
+              }}>
+              <Image
+                source={require("../Images/heart.png")}
+                style={styles.heartIconStyle}
 
               />
             </TouchableOpacity>
-            <Text
-              style={{fontWeight:"bold", fontSize: 20, color: "black", marginLeft: 10 }}
-            >MENIU</Text>
-          </Button>
+          </View>
           <ScrollView
             horizontal={true}
             showsHorizontalScrollIndicator={false}
@@ -151,7 +238,7 @@ export default class DiscoverScreen extends Component {
           >
             {this.state.categories.map((category, index) => (
               <TouchableOpacity key={index} style={styles.chipsItem}
-                                onPress={()=>this.getPins(this.state.categories[index].name)}
+                                onPress={() => this.getPins(this.state.categories[index].name)}
               >
                 {category.icon}
                 <Text>{category.name}</Text>
@@ -166,26 +253,34 @@ export default class DiscoverScreen extends Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-
   },
   map: {
     flex: 1,
   },
+  headerImage: {
+    marginBottom: 15,
+    marginLeft: 10,
+    height: 50,
+    width: 270,
+  },
 
-  floatingButtonStyle: {
-    // marginLeft: 20,
-    // flexDirection: "row",
-    // alignSelf: "flex-start",
-    // backgroundColor: "#ffaf03",
+  chipHeaderImage: {
+    alignSelf: "center",
+  },
+
+  menuButtonStyle: {
     width: 40,
     resizeMode: "contain",
-    // borderRadius: 40,
     height: 40,
-    // shadowColor: "#ccc",
-    // shadowOpacity: 0.5,
-    // shadowRadius: 10,
-    // shadowOffset: { width: 3, height: 10 },
-    // // elevation: 10,
+    marginLeft: 10,
+    marginTop: 10,
+  },
+  heartIconStyle: {
+    marginTop: 5,
+    marginLeft: 25,
+    width: 40,
+    resizeMode: "contain",
+    height: 40,
   },
   headerBox: {
     display: "flex",
@@ -193,8 +288,6 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
     position: "absolute",
     width: "100%",
-    marginTop: 10,
-    paddingTop: 10,
   },
   chipsScrollView: {
     width: "100%",
